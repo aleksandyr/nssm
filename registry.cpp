@@ -4,7 +4,7 @@ int create_messages() {
   HKEY key;
 
   char registry[KEY_LENGTH];
-  if (_snprintf(registry, sizeof(registry), "SYSTEM\\CurrentControlSet\\Services\\EventLog\\Application\\%s", NSSM) < 0) {
+  if (_snprintf_s(registry, sizeof(registry), _TRUNCATE, "SYSTEM\\CurrentControlSet\\Services\\EventLog\\Application\\%s", NSSM) < 0) {
     log_event(EVENTLOG_ERROR_TYPE, NSSM_EVENT_OUT_OF_MEMORY, "eventlog registry", "create_messages()", 0);
     return 1;
   }
@@ -29,7 +29,7 @@ int create_messages() {
 int create_parameters(char *service_name, char *exe, char *flags, char *dir) {
   /* Get registry */
   char registry[KEY_LENGTH];
-  if (_snprintf(registry, sizeof(registry), NSSM_REGISTRY, service_name) < 0) {
+  if (_snprintf_s(registry, sizeof(registry), _TRUNCATE, NSSM_REGISTRY, service_name) < 0) {
     log_event(EVENTLOG_ERROR_TYPE, NSSM_EVENT_OUT_OF_MEMORY, "NSSM_REGISTRY", "create_parameters()", 0);
     return 1;
   }
@@ -70,7 +70,7 @@ int create_parameters(char *service_name, char *exe, char *flags, char *dir) {
 int create_exit_action(char *service_name, const char *action_string) {
   /* Get registry */
   char registry[KEY_LENGTH];
-  if (_snprintf(registry, sizeof(registry), NSSM_REGISTRY "\\%s", service_name, NSSM_REG_EXIT) < 0) {
+  if (_snprintf_s(registry, sizeof(registry), _TRUNCATE, NSSM_REGISTRY "\\%s", service_name, NSSM_REG_EXIT) < 0) {
     log_event(EVENTLOG_ERROR_TYPE, NSSM_EVENT_OUT_OF_MEMORY, "NSSM_REG_EXIT", "create_exit_action()", 0);
     return 1;
   }
@@ -181,12 +181,13 @@ int expand_parameter(HKEY key, char *value, char *data, unsigned long datalen, b
   return 0;
 }
 
-int get_parameters(char *service_name, char *exe, int exelen, char *flags, int flagslen, char *dir, int dirlen, char **env, unsigned long *throttle_delay) {
+int get_parameters(char *service_name, char *exe, int exelen, char *flags, int flagslen, char *dir, int _dirlen, char **env, unsigned long *throttle_delay) {
   unsigned long ret;
+  unsigned int dirlen = (_dirlen < 0 ? 0 : static_cast<unsigned int>(_dirlen));
 
   /* Get registry */
   char registry[KEY_LENGTH];
-  if (_snprintf(registry, sizeof(registry), NSSM_REGISTRY, service_name) < 0) {
+  if (_snprintf_s(registry, sizeof(registry), _TRUNCATE, NSSM_REGISTRY, service_name) < 0) {
     log_event(EVENTLOG_ERROR_TYPE, NSSM_EVENT_OUT_OF_MEMORY, "NSSM_REGISTRY", "get_parameters()", 0);
     return 1;
   }
@@ -243,7 +244,7 @@ int get_parameters(char *service_name, char *exe, int exelen, char *flags, int f
     if (ret != ERROR_FILE_NOT_FOUND) {
       if (type != REG_DWORD) {
         char milliseconds[16];
-        _snprintf(milliseconds, sizeof(milliseconds), "%lu", NSSM_RESET_THROTTLE_RESTART);
+        _snprintf_s(milliseconds, sizeof(milliseconds), _TRUNCATE, "%lu", NSSM_RESET_THROTTLE_RESTART);
         log_event(EVENTLOG_WARNING_TYPE, NSSM_EVENT_BOGUS_THROTTLE, service_name, NSSM_REG_THROTTLE, milliseconds, 0);
       }
       else log_event(EVENTLOG_ERROR_TYPE, NSSM_EVENT_QUERYVALUE_FAILED, NSSM_REG_THROTTLE, error_string(GetLastError()), 0);
@@ -265,7 +266,7 @@ int get_exit_action(char *service_name, unsigned long *ret, unsigned char *actio
 
   /* Get registry */
   char registry[KEY_LENGTH];
-  if (_snprintf(registry, sizeof(registry), NSSM_REGISTRY "\\%s", service_name, NSSM_REG_EXIT) < 0) {
+  if (_snprintf_s(registry, sizeof(registry), _TRUNCATE, NSSM_REGISTRY "\\%s", service_name, NSSM_REG_EXIT) < 0) {
     log_event(EVENTLOG_ERROR_TYPE, NSSM_EVENT_OUT_OF_MEMORY, "NSSM_REG_EXIT", "get_exit_action()", 0);
     return 1;
   }
@@ -283,7 +284,7 @@ int get_exit_action(char *service_name, unsigned long *ret, unsigned char *actio
 
   char code[64];
   if (! ret) code[0] = '\0';
-  else if (_snprintf(code, sizeof(code), "%lu", *ret) < 0) {
+  else if (_snprintf_s(code, sizeof(code), _TRUNCATE, "%lu", *ret) < 0) {
     RegCloseKey(key);
     return get_exit_action(service_name, 0, action, default_action);
   }
